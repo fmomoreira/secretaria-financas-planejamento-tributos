@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanças e Planejamento - São José do Belmonte</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Corporate Finance Blue -->
+    <!-- Application Structure Plan: A side-navigation SPA, maintaining the successful structure of previous catalogs. The left sidebar organizes services into logical financial and urban planning categories (e.g., Alvarás, Tributos Imobiliários, Uso do Solo). The main area features a search bar and interactive accordion cards for each service. This master-detail structure is highly effective for guiding citizens through complex bureaucratic processes, allowing them to browse categories and expand specific items for detailed requirements. -->
+    <!-- Visualization & Content Choices: Report Info: Financial/Planning Services Text -> Goal: Guide User -> Presentation: Interactive list/card system -> Interaction: Category filtering, text search, accordion-style detail expansion -> Justification: The source material is entirely procedural. The interactive card system is the most effective way to transform dense, text-based instructions into a user-friendly, task-oriented tool. Unicode icons are used to visually break up text sections, enhancing scannability. -> Library/Method: Vanilla JS for DOM manipulation, TailwindCSS for layout. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-main: #f8f7f4;
+            --bg-sidebar: #e9e7e2;
+            --text-dark: #3a3a3a;
+            --text-light: #5a5a5a;
+            --accent: #1d4ed8; /* Corporate Finance Blue */
+            --border-color: #d1d5db;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+        }
+        .sidebar-item.active {
+            background-color: var(--accent);
+            color: white;
+            font-weight: 600;
+        }
+        .service-card-header {
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .service-card-header:hover {
+            background-color: #f0f0f0;
+        }
+        .service-card-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+        }
+        .service-card-details.open {
+            max-height: 2500px; /* Increased for longer content */
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        .icon {
+            font-size: 1.25rem;
+            margin-right: 0.75rem;
+            color: var(--accent);
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="antialiased">
+
+    <div id="app" class="flex flex-col md:flex-row min-h-screen">
+        
+        <aside id="sidebar" class="w-full md:w-64 lg:w-72 bg-[var(--bg-sidebar)] p-4 md:p-6 flex-shrink-0">
+            <h1 class="text-xl font-bold text-gray-800 mb-6">Finanças e Planejamento</h1>
+            <nav id="category-nav">
+                <ul class="space-y-2">
+                    <li><button data-category="Todos" class="sidebar-item w-full text-left p-3 rounded-lg font-medium text-[var(--text-light)] transition-colors duration-200 hover:bg-gray-300 active">Todos os Serviços</button></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="flex-1 p-4 md:p-8 lg:p-10">
+            <header class="mb-8">
+                <h2 class="text-2xl md:text-3xl font-bold text-[var(--text-dark)]">Catálogo de Serviços de Finanças e Planejamento</h2>
+                <p class="text-md text-[var(--text-light)] mt-1">Informações sobre alvarás, tributos, certidões e regularização de imóveis.</p>
+                <div class="mt-6">
+                    <input type="text" id="search-input" placeholder="🔎 Pesquisar por serviço..." class="w-full max-w-lg p-3 border border-[var(--border-color)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:outline-none transition-shadow">
+                </div>
+            </header>
+            
+            <div id="services-container" class="space-y-4">
+                
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const servicesData = [
+            {
+                "category": "Alvarás e Licenças",
+                "title": "Solicitar alvará de funcionamento",
+                "description": "Permite que empresas, comércios, prestadores de serviço e indústrias obtenham a licença obrigatória para iniciar suas atividades. O alvará comprova que o estabelecimento cumpre as normas municipais.",
+                "documents": ["CPF e RG", "Comprovante de residência", "CNPJ da empresa", "Contrato social ou declaração de MEI", "Croqui ou planta do imóvel (quando aplicável)"],
+                "requirements": ["Ser morador do município", "Estar com as obrigações municipais em dia", "O imóvel deve estar em área permitida para a atividade"],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Apresentar os documentos solicitados.",
+                    "Preencher o requerimento de Alvará de Funcionamento.",
+                    "Aguardar a vistoria técnica e análise da documentação.",
+                    "Após aprovação, retirar o Alvará de Funcionamento."
+                ]
+            },
+            {
+                "category": "Alvarás e Licenças",
+                "title": "Solicitar alteração cadastral no alvará de funcionamento",
+                "description": "Garante que o proprietário de um estabelecimento possa atualizar as informações do seu alvará, necessário em caso de mudança de razão social, atividade, sócios ou nome fantasia.",
+                "documents": ["CPF e RG", "CNPJ da empresa", "Alvará de funcionamento atual", "Documento que comprove a alteração (ex: contrato social atualizado)"],
+                "requirements": ["A empresa deve ser sediada no município.", "O alvará original deve estar válido.", "A alteração deve estar registrada no órgão competente (Junta Comercial, etc.)."],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Apresentar os documentos solicitados.",
+                    "Preencher o requerimento de alteração cadastral.",
+                    "Aguardar a análise e a atualização no sistema.",
+                    "Retirar o novo alvará com os dados atualizados."
+                ]
+            },
+            {
+                "category": "Alvarás e Licenças",
+                "title": "Solicitar exclusão de alvará de funcionamento",
+                "description": "Permite que uma empresa que encerrou suas atividades solicite a baixa do seu alvará e inscrição municipal, encerrando formalmente as obrigações tributárias com o município.",
+                "documents": ["CPF e RG do responsável", "Comprovante de baixa do CNPJ (emitido pela Receita Federal)", "Último alvará de funcionamento", "Distrato Social ou Certificado de Baixa de MEI"],
+                "requirements": ["A empresa deve estar com a situação 'baixada' na Receita Federal.", "Não possuir débitos com o município.", "Solicitação deve ser feita pelo responsável legal."],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Apresentar os documentos para o cancelamento.",
+                    "Preencher e assinar o requerimento de baixa.",
+                    "Protocolar a solicitação e receber o comprovante da exclusão."
+                ]
+            },
+            {
+                "category": "Alvarás e Licenças",
+                "title": "Solicitar licença de sepultamento/cemitério",
+                "description": "Garante à família de uma pessoa falecida a autorização para realizar o sepultamento em um cemitério público municipal, envolvendo a emissão da guia e a designação do local.",
+                "documents": ["Certidão de Óbito", "RG/CPF da pessoa falecida", "RG/CPF do familiar responsável", "Título de propriedade do jazigo (se houver)"],
+                "requirements": ["Apresentar a Certidão de Óbito original.", "Solicitação por familiar ou representante legal.", "Pagamento das taxas cemiteriais (salvo isenção)."],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Apresentar a documentação necessária.",
+                    "Pagar a guia com as taxas de sepultamento.",
+                    "Retirar a Licença de Sepultamento.",
+                    "Agendar o sepultamento com a administração do cemitério."
+                ]
+            },
+            {
+                "category": "Tributos Imobiliários",
+                "title": "Emitir guia do Imposto de Compra e Venda de Imóvel (ITBI)",
+                "description": "Permite que o comprador de um imóvel emita a guia para pagamento do ITBI. O pagamento deste imposto é obrigatório para oficializar a transferência de propriedade no cartório.",
+                "documents": ["Matrícula do Imóvel atualizada", "Carnê de IPTU ou número da Inscrição Imobiliária", "Contrato de compra e venda, escritura ou contrato de financiamento."],
+                "requirements": ["Estar realizando uma transação de compra e venda de imóvel.", "O imóvel deve estar localizado no município.", "A responsabilidade pelo pagamento é do comprador."],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Preencher a 'Declaração de Transação Imobiliária'.",
+                    "Apresentar a documentação para comprovação.",
+                    "Aguardar a análise e validação do valor do imposto.",
+                    "Gerar a guia de recolhimento do ITBI e realizar o pagamento."
+                ]
+            },
+            {
+                "category": "Certidões e Cadastros",
+                "title": "Solicitar certidão negativa de débito",
+                "description": "Permite obter um documento que comprova a inexistência de débitos (impostos, taxas) com o município. É exigida em licitações, venda de imóveis e financiamentos.",
+                "documents": ["Pessoa Física: Número do CPF", "Pessoa Jurídica: Número do CNPJ", "Documento de identificação com foto (RG ou CNH)"],
+                "requirements": ["Não possuir débitos vencidos registrados no CPF ou CNPJ.", "O cadastro na prefeitura deve estar regular."],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Preencher e assinar o Requerimento à Prefeitura.",
+                    "Apresentar os documentos necessários.",
+                    "Realizar o pagamento de Taxa.",
+                    "Um servidor irá imprimir a certidão."
+                ]
+            },
+            {
+                "category": "Tributos Imobiliários",
+                "title": "Verificar dívida ativa de imóvel",
+                "description": "Permite que o proprietário consulte a existência de débitos de seu imóvel (como IPTU atrasado) que já foram inscritos na Dívida Ativa do município.",
+                "documents": ["Número da Inscrição Imobiliária", "CPF ou CNPJ do proprietário", "RG do proprietário"],
+                "requirements": ["Ser o proprietário do imóvel ou seu representante legal.", "O imóvel possuir débitos inscritos na Dívida Ativa."],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Informar o número da Inscrição Imobiliária ou o CPF/CNPJ do proprietário.",
+                    "Será realizada a consulta para visualizar o extrato dos débitos."
+                ]
+            },
+            {
+                "category": "Tributos Imobiliários",
+                "title": "Solicitar parcelamento de débitos de imóvel (IPTU)",
+                "description": "Oferece ao proprietário com débitos de IPTU em atraso a oportunidade de regularizar sua situação, dividindo o valor total da dívida em parcelas mensais.",
+                "documents": ["CPF e RG do proprietário", "Carnê de IPTU antigo ou número da Inscrição Imobiliária", "Comprovante de endereço atualizado", "Procuração (se não for o proprietário)"],
+                "requirements": ["Ser o proprietário legal do imóvel ou representante.", "Possuir débitos de IPTU de anos anteriores.", "Aderir às condições do programa de parcelamento."],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Apresentar os documentos necessários.",
+                    "Solicitar a simulação do parcelamento.",
+                    "Assinar o Termo de Acordo de Parcelamento.",
+                    "Receber e pagar a primeira guia para efetivar o acordo."
+                ]
+            },
+            {
+                "category": "Tributos Imobiliários",
+                "title": "Solicitar carnê IPTU",
+                "description": "Permite ao proprietário de imóvel obter o carnê para pagamento do IPTU, seja a primeira via ou uma segunda via em caso de perda.",
+                "documents": ["Número da Inscrição Imobiliária", "CPF ou CNPJ do proprietário"],
+                "requirements": ["Ser o proprietário do imóvel ou seu representante legal.", "O imóvel deve possuir um cadastro imobiliário ativo."],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Informar o número da Inscrição Imobiliária ou o CPF/CNPJ do proprietário.",
+                    "O servidor irá gerar a guia para pagamento."
+                ]
+            },
+            {
+                "category": "Certidões e Cadastros",
+                "title": "Solicitar certidão de confirmação de endereço",
+                "description": "Permite obter uma certidão que confirma oficialmente o endereço de um imóvel, com base nos registros do cadastro imobiliário da prefeitura.",
+                "documents": ["CPF e RG do proprietário", "Carnê de IPTU ou número da Inscrição Imobiliária", "Matrícula do Imóvel atualizada (pode ser solicitada)"],
+                "requirements": ["Ser o proprietário ou representante legal.", "Imóvel devidamente cadastrado.", "Pagamento de taxa para emissão."],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Preencher o requerimento padrão.",
+                    "Apresentar a documentação exigida.",
+                    "Pagar a guia de arrecadação do serviço.",
+                    "Aguardar o prazo e retirar a certidão."
+                ]
+            },
+            {
+                "category": "Certidões e Cadastros",
+                "title": "Solicitar cadastro imobiliário",
+                "description": "Realiza a inclusão de um novo imóvel (lote, casa, apartamento) no Cadastro Técnico Municipal. Este é o primeiro passo para que o imóvel passe a existir oficialmente para a prefeitura.",
+                "documents": ["RG ou CNH", "CPF", "Comprovante de Propriedade ou Posse (Escritura, Contrato)", "Certidão de Registro do Imóvel", "Memorial Descritivo"],
+                "requirements": [],
+                "procedure": [
+                    "Dirija-se ao setor de Tributos e informe que precisa realizar um 'Cadastro imobiliário'.",
+                    "Preencha o Requerimento.",
+                    "Protocole o Pedido com as cópias dos documentos.",
+                    "Aguarde análise e possível vistoria do imóvel.",
+                    "Após aprovação, a prefeitura irá gerar a Inscrição Imobiliária."
+                ]
+            },
+            {
+                "category": "Uso e Ocupação do Solo",
+                "title": "Solicitar certidão de zona urbana",
+                "description": "Emite um documento que certifica se um determinado imóvel está localizado dentro do perímetro urbano do município, conforme o Plano Diretor.",
+                "documents": ["CPF e RG do proprietário", "Carnê de IPTU ou número da Inscrição Imobiliária", "Matrícula do Imóvel atualizada"],
+                "requirements": ["Ser o proprietário ou representante legal.", "Imóvel localizado no perímetro urbano.", "Pagamento da taxa de serviço."],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Preencher o requerimento específico.",
+                    "Apresentar a documentação para análise.",
+                    "Pagar a guia do serviço.",
+                    "Aguardar o prazo e retirar a certidão."
+                ]
+            },
+            {
+                "category": "Uso e Ocupação do Solo",
+                "title": "Descaracterização de imóvel rural para urbano",
+                "description": "Permite que o proprietário de um imóvel que era rural mas foi englobado pela expansão da cidade solicite a alteração de sua classificação para urbano. Com isso, passa a pagar IPTU em vez de ITR.",
+                "documents": ["CPF e RG do proprietário", "Matrícula do Imóvel atualizada", "CCIR (Certificado de Cadastro de Imóvel Rural)", "Comprovante de quitação do ITR", "Mapa ou levantamento topográfico (pode ser solicitado)"],
+                "requirements": ["O imóvel deve estar em área definida como zona urbana por lei municipal.", "Ser o proprietário ou representante legal.", "Imóvel deve ter acesso a melhorias urbanas básicas."],
+                "procedure": [
+                    "Comparecer à prefeitura no setor de tributos.",
+                    "Preencher o requerimento para a alteração.",
+                    "Apresentar os documentos necessários.",
+                    "Aguardar a análise técnica e possível vistoria.",
+                    "Após aprovado, receber o novo número de inscrição cadastral urbana."
+                ]
+            },
+            {
+                "category": "Uso e Ocupação do Solo",
+                "title": "Solicitar divisão de um lote/terreno (Desmembramento)",
+                "description": "Permite que o proprietário de um lote ou terreno o divida em duas ou mais partes menores, gerando novas matrículas independentes no cartório, seguindo as regras do município.",
+                "documents": ["CPF e RG", "Comprovante de propriedade", "Planta do lote assinada por profissional habilitado", "ART ou RRT do responsável técnico"],
+                "requirements": ["Ser morador do município", "Estar em dia com os tributos", "O lote deve estar devidamente registrado no cartório"],
+                "procedure": [
+                    "Comparecer ao setor de finanças e tributos.",
+                    "Apresentar os documentos exigidos.",
+                    "Preencher o formulário de solicitação de desmembramento.",
+                    "Aguardar a análise técnica e vistoria (se necessária).",
+                    "Receber o parecer ou aprovação."
+                ]
+            },
+            {
+                "category": "Uso e Ocupação do Solo",
+                "title": "Solicitar união de lotes/terrenos (Remembramento)",
+                "description": "Permite que o proprietário de dois ou mais lotes vizinhos os unifique, transformando-os em um único imóvel com uma só matrícula no cartório. É o processo inverso do desmembramento.",
+                "documents": ["CPF e RG", "Comprovante de propriedade dos lotes", "Planta dos lotes a serem unificados assinada por profissional", "ART ou RRT do responsável técnico"],
+                "requirements": ["Os lotes devem ser vizinhos (contíguos)", "Estar em dia com os tributos", "Lotes devidamente registrados"],
+                "procedure": [
+                    "Comparecer ao setor de finanças e tributos.",
+                    "Apresentar todos os documentos exigidos.",
+                    "Preencher o formulário de solicitação de remembramento.",
+                    "Aguardar análise técnica e vistoria (se necessária).",
+                    "Receber a aprovação final da unificação."
+                ]
+            },
+            {
+                "category": "Uso e Ocupação do Solo",
+                "title": "Solicitar retificação de área",
+                "description": "Permite que o proprietário corrija a medida da área registrada na matrícula do cartório, quando ela não corresponde à realidade física do terreno.",
+                "documents": ["CPF e RG do proprietário", "Carnê de IPTU ou Inscrição Imobiliária", "Planta ou laudo técnico com a área correta (com ART/RRT)", "Matrícula do Imóvel atualizada"],
+                "requirements": ["Ser o proprietário ou representante legal.", "Apresentar documento técnico que comprove a divergência de área.", "Imóvel regular perante as leis de construção."],
+                "procedure": [
+                    "Comparecer ao setor de finanças e tributos.",
+                    "Preencher o formulário de solicitação de retificação.",
+                    "Apresentar a documentação, especialmente a prova técnica.",
+                    "Pagar a taxa do serviço, se houver.",
+                    "Aguardar a análise do processo, que pode incluir vistoria."
+                ]
+            },
+            {
+                "category": "Tributos de Serviços (ISSQN)",
+                "title": "Solicitar nota fiscal de serviço avulsa",
+                "description": "Permite que prestadores de serviço autônomos, que não possuem CNPJ e realizam serviços esporadicamente, possam emitir uma nota fiscal para seus clientes diretamente pela prefeitura.",
+                "documents": ["CPF", "RG", "Comprovante de endereço", "Cadastro Municipal de Contribuinte (se houver)"],
+                "requirements": ["Ser prestador de serviços autônomo ou eventual.", "Estar em dia com as obrigações fiscais municipais."],
+                "procedure": [
+                    "Comparecer à Secretaria de Finanças (ou setor de Tributação).",
+                    "Solicitar a emissão de Nota Fiscal de Serviço Avulsa.",
+                    "Apresentar os documentos e informar os dados do serviço.",
+                    "Efetuar o pagamento da taxa, se aplicável.",
+                    "Retirar a Nota Fiscal emitida."
+                ]
+            },
+            {
+                "category": "Uso e Ocupação do Solo",
+                "title": "Solicitar emissão de taxa de aprovação de loteamento",
+                "description": "Permite que o empreendedor de um projeto de loteamento emita a guia para pagamento da taxa de análise e aprovação do projeto pela prefeitura.",
+                "documents": ["CPF/RG ou CNPJ/Contrato Social do proprietário", "Matrícula do Imóvel", "Certidões negativas de débitos", "Projeto urbanístico completo", "Projetos de infraestrutura"],
+                "requirements": ["Ser o proprietário legal do imóvel.", "O projeto deve atender à lei de uso e ocupação do solo.", "O imóvel não pode ter pendências."],
+                "procedure": [
+                    "Comparecer ao setor de finanças e tributos.",
+                    "Apresentar o conjunto completo de projetos.",
+                    "Solicitar a emissão da guia para pagamento da taxa.",
+                    "Aguardar a análise técnica do projeto.",
+                    "Após cumprir as exigências, obter o decreto de aprovação."
+                ]
+            },
+            {
+                "category": "Uso e Ocupação do Solo",
+                "title": "Solicitar carta de anuência (uso de ocupação de solo)",
+                "description": "Permite obter um documento que declara que uma atividade está de acordo com a Lei de Uso e Ocupação do Solo do município para um local específico.",
+                "documents": ["CPF/RG ou CNPJ", "Cópia do Carnê de IPTU", "Matrícula do Imóvel", "Requerimento descrevendo a atividade", "Procuração (se aplicável)"],
+                "requirements": ["Ser o proprietário ou representante legal.", "Informar claramente a finalidade do pedido.", "Pagamento da taxa de análise."],
+                "procedure": [
+                    "Comparecer ao setor de finanças e tributos.",
+                    "Preencher o formulário específico.",
+                    "Apresentar a documentação necessária.",
+                    "Pagar a guia com a taxa do serviço.",
+                    "Aguardar a análise técnica e retirar a carta."
+                ]
+            },
+            {
+                "category": "Tributos de Serviços (ISSQN)",
+                "title": "Solicitar imposto sobre serviço de qualquer natureza (ISSQN)",
+                "description": "Refere-se a qualquer serviço relacionado ao ISSQN, como emissão de guias, consulta de débitos, parcelamento ou orientações sobre o recolhimento do imposto.",
+                "documents": ["Para Empresas: CNPJ, Contrato Social, RG/CPF dos sócios.", "Para Autônomos: RG, CPF, comprovante de endereço, registro profissional.", "Comprovante de endereço do local do serviço."],
+                "requirements": ["Prestar serviço tributável pelo ISSQN.", "Possuir CNPJ ativo ou ser profissional habilitado.", "Ter endereço fiscal no município."],
+                "procedure": [
+                    "Comparecer ao setor de finanças e tributos.",
+                    "Apresentar os documentos para seu enquadramento.",
+                    "Receber a Inscrição Municipal e senha para o sistema da Nota Fiscal Eletrônica.",
+                    "Emitir as NFS-e por cada serviço prestado.",
+                    "Apurar o imposto mensalmente e gerar a guia para pagamento."
+                ]
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const servicesContainer = document.getElementById('services-container');
+            const categoryNav = document.getElementById('category-nav').querySelector('ul');
+            const searchInput = document.getElementById('search-input');
+            const categories = [...new Set(servicesData.map(service => service.category))];
+
+            function initNav() {
+                categories.sort().forEach(category => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<button data-category="${category}" class="sidebar-item w-full text-left p-3 rounded-lg font-medium text-[var(--text-light)] transition-colors duration-200 hover:bg-gray-300">${category}</button>`;
+                    categoryNav.appendChild(li);
+                });
+            }
+
+            function renderServices(filter = 'Todos', searchTerm = '') {
+                servicesContainer.innerHTML = '';
+                let filteredServices = servicesData;
+
+                if (filter !== 'Todos') {
+                    filteredServices = filteredServices.filter(service => service.category === filter);
+                }
+
+                if (searchTerm) {
+                    const normalizedSearchTerm = searchTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    filteredServices = filteredServices.filter(service => {
+                        const normalizedTitle = service.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        const normalizedDescription = service.description.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        return normalizedTitle.includes(normalizedSearchTerm) || normalizedDescription.includes(normalizedSearchTerm);
+                    });
+                }
+
+                if (filteredServices.length === 0) {
+                    servicesContainer.innerHTML = `<p class="text-center text-gray-500 col-span-full">Nenhum serviço encontrado.</p>`;
+                    return;
+                }
+                
+                filteredServices.forEach(service => {
+                    const card = document.createElement('div');
+                    card.className = 'service-card bg-white border border-[var(--border-color)] rounded-lg shadow-sm overflow-hidden';
+
+                    const documentsHTML = service.documents.length > 0 ? `
+                        <div class="mb-4">
+                            <h4 class="font-semibold text-md flex items-center"><span class="icon">📄</span>Documentos Necessários</h4>
+                            <ul class="list-disc list-inside mt-2 text-[var(--text-light)] pl-2 space-y-1">
+                                ${service.documents.map(doc => `<li>${doc}</li>`).join('')}
+                            </ul>
+                        </div>` : '';
+                    
+                    const requirementsHTML = service.requirements.length > 0 ? `
+                        <div class="mb-4">
+                            <h4 class="font-semibold text-md flex items-center"><span class="icon">✅</span>Requisitos</h4>
+                            <ul class="list-disc list-inside mt-2 text-[var(--text-light)] pl-2 space-y-1">
+                                ${service.requirements.map(req => `<li>${req}</li>`).join('')}
+                            </ul>
+                        </div>` : '';
+
+                    card.innerHTML = `
+                        <div class="service-card-header p-4 flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-[var(--text-dark)]">${service.title}</h3>
+                            <span class="transform transition-transform duration-300">▼</span>
+                        </div>
+                        <div class="service-card-details px-4">
+                            <p class="text-[var(--text-light)] mb-4">${service.description}</p>
+                            ${documentsHTML}
+                            ${requirementsHTML}
+                            <div>
+                                <h4 class="font-semibold text-md flex items-center"><span class="icon">➡️</span>Procedimento</h4>
+                                <ol class="list-decimal list-inside mt-2 text-[var(--text-light)] pl-2 space-y-1">
+                                    ${service.procedure.map(step => `<li>${step}</li>`).join('')}
+                                </ol>
+                            </div>
+                        </div>
+                    `;
+                    servicesContainer.appendChild(card);
+                });
+            }
+            
+            categoryNav.addEventListener('click', (e) => {
+                if(e.target.tagName === 'BUTTON'){
+                    const category = e.target.dataset.category;
+                    searchInput.value = '';
+                    renderServices(category);
+
+                    document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+                    e.target.classList.add('active');
+                }
+            });
+
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value;
+                const activeCategory = document.querySelector('.sidebar-item.active').dataset.category;
+                renderServices(activeCategory, searchTerm);
+            });
+            
+            servicesContainer.addEventListener('click', (e) => {
+                const header = e.target.closest('.service-card-header');
+                if (header) {
+                    const details = header.nextElementSibling;
+                    const icon = header.querySelector('span');
+                    const isOpen = details.classList.contains('open');
+
+                    document.querySelectorAll('.service-card-details.open').forEach(openDetail => {
+                        if (openDetail !== details) {
+                             openDetail.classList.remove('open');
+                             openDetail.previousElementSibling.querySelector('span').style.transform = 'rotate(0deg)';
+                        }
+                    });
+
+                    details.classList.toggle('open');
+                    icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+                }
+            });
+
+            initNav();
+            renderServices();
+        });
+    </script>
+</body>
+</html>
